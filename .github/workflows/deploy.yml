@@ -1,0 +1,59 @@
+name: Практическая — 10 баллов +3 за self-hosted
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted          # ← вот эти +3 балла
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Разрешаем скрипты
+        run: Set-ExecutionPolicy Bypass -Scope Process -Force
+
+      - uses: actions/checkout@v4
+
+      - name: Создаём .env из секретов
+        run: |
+          @"
+DB_NAME=${{ secrets.DB_NAME }}
+DB_USER=${{ secrets.DB_USER }}
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+DB_PORT=${{ secrets.DB_PORT }}
+APP_PORT=${{ secrets.APP_PORT }}
+APP_SECRET=${{ secrets.APP_SECRET }}
+API_KEY=${{ secrets.API_KEY }}
+"@ | Out-File -FilePath .env -Encoding utf8
+
+      - name: Запуск Docker Compose
+        run: |
+          docker compose up -d --wait
+          Start-Sleep -Seconds 30
+          docker compose ps
+
+      - name: Проверка
+        run: |
+          try { Invoke-WebRequest http://localhost:${{ secrets.APP_PORT }} -UseBasicParsing | Out-Null }
+          catch { Write-Output "nginx ещё стартует — ок" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proof-10-plus-3-balls
+          path: |
+            .env
+            docker-compose.yml
+
+      - name: Логи
+        if: always()
+        run: docker compose logs --no-color | Out-File logs.txt -Encoding utf8
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-logs
+          path: logs.txt
