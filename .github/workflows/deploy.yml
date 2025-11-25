@@ -21,13 +21,13 @@ jobs:
       - name: Создаём .env из секретов
         run: |
           @"
-DB_NAME=${{ secrets.DB_NAME }}
-DB_USER=${{ secrets.DB_USER }}
-DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-DB_PORT=${{ secrets.DB_PORT }}
-APP_PORT=${{ secrets.APP_PORT }}
-APP_SECRET=${{ secrets.APP_SECRET }}
-API_KEY=${{ secrets.API_KEY }}
+DB_NAME=${{secrets.DB_NAME}}
+DB_USER=${{secrets.DB_USER}}
+DB_PASSWORD=${{secrets.DB_PASSWORD}}
+DB_PORT=${{secrets.DB_PORT}}
+APP_PORT=${{secrets.APP_PORT}}
+APP_SECRET=${{secrets.APP_SECRET}}
+API_KEY=${{secrets.API_KEY}}
 "@ | Out-File -FilePath .env -Encoding utf8
 
       - name: Запуск Docker Compose
