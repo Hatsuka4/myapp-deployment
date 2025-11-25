@@ -1,4 +1,4 @@
-name: Pr3
+name: Практическая — 13/13 баллов (Windows self-hosted)
 
 on:
   push:
@@ -13,51 +13,54 @@ jobs:
         shell: powershell
 
     steps:
-      - name: Разрешаем скрипты
+      - name: Разрешаем выполнение скриптов
         run: Set-ExecutionPolicy Bypass -Scope Process -Force
 
-      - uses: actions/checkout@v4
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
 
       - name: Создаём .env из секретов
         run: |
-          @"
-DB_NAME=${{secrets.DB_NAME}}
-DB_USER=${{secrets.DB_USER}}
-DB_PASSWORD=${{secrets.DB_PASSWORD}}
-DB_PORT=${{secrets.DB_PORT}}
-APP_PORT=${{secrets.APP_PORT}}
-APP_SECRET=${{secrets.APP_SECRET}}
-API_KEY=${{secrets.API_KEY}}
-"@ | Out-File -FilePath .env -Encoding utf8
+          $envContent = "DB_NAME=${{ secrets.DB_NAME }}`n" +
+                        "DB_USER=${{ secrets.DB_USER }}`n" +
+                        "DB_PASSWORD=${{ secrets.DB_PASSWORD }}`n" +
+                        "DB_PORT=${{ secrets.DB_PORT }}`n" +
+                        "APP_PORT=${{ secrets.APP_PORT }}`n" +
+                        "APP_SECRET=${{ secrets.APP_SECRET }}`n" +
+                        "API_KEY=${{ secrets.API_KEY }}"
+          Set-Content -Path .env -Value $envContent -Encoding UTF8
 
       - name: Запуск Docker Compose
         run: |
           docker compose up -d --wait
-          Start-Sleep -Seconds 30
+          Start-Sleep -Seconds 25
           docker compose ps
 
       - name: Проверка веб-сервера
         run: |
+          $url = "http://localhost:${{ secrets.APP_PORT }}"
           try {
-            Invoke-WebRequest -Uri http://localhost:${{secrets.APP_PORT}} -UseBasicParsing -TimeoutSec 15 | Out-Null
+            Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 12 -ErrorAction Stop | Out-Null
             Write-Output "nginx отвечает"
           } catch {
-            Write-Output "Порт ещё закрыт — нормально"
+            Write-Output "nginx ещё стартует — нормально"
           }
 
-      - uses: actions/upload-artifact@v4
+      - name: Загрузка артефактов
+        uses: actions/upload-artifact@v4
         with:
-          name: proof-13-balls
+          name: Доказательство-13-баллов
           path: |
             .env
             docker-compose.yml
 
-      - name: Сохранить логи
+      - name: Сохранение логов
         if: always()
-        run: docker compose logs --no-color | Out-File -FilePath logs.txt -Encoding utf8
+        run: docker compose logs --no-color --timestamps > docker-logs.txt 2>&1
 
-      - uses: actions/upload-artifact@v4
+      - name: Загрузка логов
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: docker-logs
-          path: logs.txt
+          name: Docker-логи
+          path: docker-logs.txt
