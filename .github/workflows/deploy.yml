@@ -1,11 +1,4 @@
-
-То есть **без пробелов** внутри `{{ }}`.
-
-Вот **полностью исправленный и 100 % валидный workflow** для твоего Windows self-hosted runner.  
-Скопируй его целиком и замени весь файл `.github/workflows/deploy.yml`:
-
-```yaml
-name: Практическая — 10 + 3 балла (Windows self-hosted)
+name: Pr3
 
 on:
   push:
